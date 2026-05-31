@@ -5,6 +5,9 @@ on:
     - cron: '0 6 * * *'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   update-dashboard:
     runs-on: ubuntu-latest
@@ -32,6 +35,15 @@ jobs:
           GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcloud_adc.json
           GRID_API_TOKEN: ${{ secrets.GRID_API_TOKEN }}
         run: python update_dashboard.py
+
+      - name: Deploy to GitHub Pages
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          cp artifact_hcm.html docs/index.html
+          git add docs/index.html
+          git commit -m "Update HCM dashboard $(date +'%Y-%m-%d')" || echo "No changes"
+          git push
 
       - name: Cleanup credentials
         if: always()
