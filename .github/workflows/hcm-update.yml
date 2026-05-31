@@ -23,7 +23,9 @@ jobs:
         run: pip install google-cloud-bigquery google-auth requests
 
       - name: Create Google credentials file
-        run: echo '${{ secrets.GOOGLE_ADC_CREDENTIALS }}' > /tmp/gcloud_adc.json
+        env:
+          GOOGLE_CREDS: ${{ secrets.GOOGLE_ADC_CREDENTIALS }}
+        run: echo "$GOOGLE_CREDS" > /tmp/gcloud_adc.json
 
       - name: Run update script
         env:
