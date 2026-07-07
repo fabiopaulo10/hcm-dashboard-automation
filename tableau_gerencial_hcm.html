@@ -861,4 +861,17 @@ async function loadAndInit() {
     EMBEDDED_DATA = json.rows || [];
     DATA_END = json.data_end || '';
     document.getElementById('f-end').value = DATA_END;
-    a
+    applyFilters();
+  } catch(e) {
+    console.error('Erro ao carregar dados:', e);
+    showError('Erro ao carregar dados: ' + e.message);
+  } finally {
+    if (loading) { loading.classList.remove('show'); }
+  }
+}
+
+loadAndInit();
+
+</script>
+</body>
+</html>
