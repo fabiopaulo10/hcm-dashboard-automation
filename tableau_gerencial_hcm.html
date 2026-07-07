@@ -840,13 +840,15 @@ function showError(msg){
 // Init dates
 document.getElementById('f-start').value='2026-01-01';
 // ================================================================
-// AUTO-LOAD DATA FROM GITHUB
+// AUTO-LOAD DATA — Grid State (Verdi Flow) > GitHub > Embedded
 // ================================================================
 const DATA_URL = 'https://raw.githubusercontent.com/fabiopaulo10/hcm-dashboard-automation/main/data.json';
+const GRID_STATE_URL = 'https://grid.melioffice.com/api/v1/documents/01KSRJ5STC80GGR6CKPB24MH9W/states/hcm_data';
+const GRID_TOKEN = 'grid_sk_01KSZV8M0KB8M8MWDR3FBZ4VWW';
 
 async function loadAndInit() {
   const loading = document.getElementById('loading-box');
-  // Se dados já estão embutidos (versão Grid), pula o fetch externo
+  // 1. Dados embutidos diretamente no HTML (atualização manual via script)
   if (EMBEDDED_DATA.length > 0) {
     if (loading) { loading.classList.remove('show'); }
     document.getElementById('f-end').value = DATA_END;
@@ -854,6 +856,26 @@ async function loadAndInit() {
     return;
   }
   if (loading) { loading.classList.add('show'); }
+  // 2. Grid State API — atualizado automaticamente pelo Verdi Flow (sem notebook)
+  try {
+    const gsRes = await fetch(GRID_STATE_URL, {
+      headers: { 'Authorization': 'Bearer ' + GRID_TOKEN }
+    });
+    if (gsRes.ok) {
+      const gsJson = await gsRes.json();
+      const val = gsJson.value || gsJson;
+      const rows = val.rows || val.data || [];
+      if (rows.length > 0) {
+        EMBEDDED_DATA = rows;
+        DATA_END = val.data_end || val.dataEnd || '';
+        document.getElementById('f-end').value = DATA_END;
+        if (loading) { loading.classList.remove('show'); }
+        applyFilters();
+        return;
+      }
+    }
+  } catch(e) { console.warn('Grid State indisponível, tentando GitHub...', e); }
+  // 3. GitHub data.json — fallback para GitHub Pages / acesso externo
   try {
     const res = await fetch(DATA_URL + '?_=' + Date.now());
     if (!res.ok) throw new Error('HTTP ' + res.status);
