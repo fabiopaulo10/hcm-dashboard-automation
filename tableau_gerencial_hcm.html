@@ -848,15 +848,8 @@ const GRID_TOKEN = 'grid_sk_01KSZV8M0KB8M8MWDR3FBZ4VWW';
 
 async function loadAndInit() {
   const loading = document.getElementById('loading-box');
-  // 1. Dados embutidos diretamente no HTML (atualização manual via script)
-  if (EMBEDDED_DATA.length > 0) {
-    if (loading) { loading.classList.remove('show'); }
-    document.getElementById('f-end').value = DATA_END;
-    applyFilters();
-    return;
-  }
   if (loading) { loading.classList.add('show'); }
-  // 2. Grid State API — atualizado automaticamente pelo Verdi Flow (sem notebook)
+  // 1. Grid State API — fonte principal (Verdi Flow atualiza sem notebook)
   try {
     const gsRes = await fetch(GRID_STATE_URL, {
       headers: { 'Authorization': 'Bearer ' + GRID_TOKEN }
@@ -874,8 +867,15 @@ async function loadAndInit() {
         return;
       }
     }
-  } catch(e) { console.warn('Grid State indisponível, tentando GitHub...', e); }
-  // 3. GitHub data.json — fallback para GitHub Pages / acesso externo
+  } catch(e) { console.warn('Grid State indisponível:', e); }
+  // 2. Dados embutidos no HTML (fallback — atualização manual via script)
+  if (EMBEDDED_DATA.length > 0) {
+    if (loading) { loading.classList.remove('show'); }
+    document.getElementById('f-end').value = DATA_END;
+    applyFilters();
+    return;
+  }
+  // 3. GitHub data.json — fallback externo
   try {
     const res = await fetch(DATA_URL + '?_=' + Date.now());
     if (!res.ok) throw new Error('HTTP ' + res.status);
