@@ -1,0 +1,28 @@
+name: HCM Dashboard D-1
+
+on:
+  schedule:
+    - cron: '0 12 * * 1-5'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-hcm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Instalar dependencias
+        run: pip install google-cloud-bigquery requests
+      - name: Configurar credenciais Google
+        run: echo '${{ secrets.GOOGLE_CREDENTIALS_JSON }}' > /tmp/gcloud_creds.json
+      - name: Rodar update incremental
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcloud_creds.json
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GRID_TOKEN: ${{ secrets.GRID_TOKEN }}
+        run: python3 update_hcm_incremental.py
