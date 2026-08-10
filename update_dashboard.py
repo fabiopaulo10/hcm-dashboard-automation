@@ -1,15 +1,12 @@
 """
 GitHub Actions — HCM Dashboard incremental update
-Roda na nuvem, sem notebook. Seg-Sex 07:34 BRT (10:34 UTC).
+Roda na nuvem, sem notebook. Seg-Sex conforme cron do workflow.
 """
-import json, re, os, sys, datetime, base64, requests
+import json, re, os, sys, datetime, base64, requests, subprocess, shutil, tempfile
 
-GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
-GRID_TOKEN   = os.environ.get("GRID_TOKEN", "")
-OWNER        = "fabiopaulo10"
-REPO         = "hcm-dashboard-automation"
-DOC_ID       = "01KSRJ5STC80GGR6CKPB24MH9W"
-GH           = {"Authorization": f"token {GITHUB_TOKEN}", "Accept": "application/vnd.github.v3+json"}
+# Tokens — o workflow passa GRID_API_TOKEN; GRID_TOKEN é fallback local
+GRID_TOKEN = os.environ.get("GRID_TOKEN") or os.environ.get("GRID_API_TOKEN", "")
+DOC_ID     = "01KSRJ5STC80GGR6CKPB24MH9W"
 
 NUMERIC = [
     "quantidade_hc_solicitado_workable","quantidade_hc_solicitado_total",
@@ -18,28 +15,30 @@ NUMERIC = [
     "reps_presentes_sin_turno",
 ]
 
-# ── 1. Descobrir data_end histórico ──────────────────────────────────────────
+# ── 1. Histórico — lê data.json do repo local (checkout já fez clone) ─────────
 def load_hist():
+    # Procura data_{d}.json do mais recente para o mais antigo
+    today = datetime.date.today()
     for i in range(1, 8):
-        d = (datetime.date.today() - datetime.timedelta(days=i)).strftime("%Y-%m-%d")
-        r = requests.get(f"https://api.github.com/repos/{OWNER}/{REPO}/contents/data_{d}.json",
-                         headers=GH, timeout=30)
-        if r.status_code == 200:
-            raw = base64.b64decode(r.json()["content"].replace("\n",""))
-            data = json.loads(raw.decode("utf-8"))
-            rows = data.get("rows", [])
+        d = (today - datetime.timedelta(days=i)).strftime("%Y-%m-%d")
+        path = f"data_{d}.json"
+        if os.path.exists(path):
+            with open(path, encoding="utf-8") as f:
+                data = json.load(f)
+            rows = data.get("rows", data) if isinstance(data, dict) else data
             if rows:
-                de = data.get("data_end") or max(r2["fecha"] for r2 in rows)
-                print(f"[hist] data_{d}.json — {len(rows)} linhas, data_end={de}")
+                de = data.get("data_end") if isinstance(data, dict) else None
+                de = de or max(r["fecha"] for r in rows)
+                print(f"[hist] {path} — {len(rows)} linhas, data_end={de}")
                 return rows, de
     # fallback: data.json
-    r = requests.get(f"https://api.github.com/repos/{OWNER}/{REPO}/contents/data.json",
-                     headers=GH, timeout=30)
-    if r.status_code == 200:
-        raw = base64.b64decode(r.json()["content"].replace("\n",""))
-        rows = json.loads(raw.decode("utf-8"))
+    if os.path.exists("data.json"):
+        with open("data.json", encoding="utf-8") as f:
+            data = json.load(f)
+        rows = data.get("rows", data) if isinstance(data, dict) else data
         if isinstance(rows, list) and rows:
-            de = max(r2["fecha"] for r2 in rows)
+            de = data.get("data_end") if isinstance(data, dict) else None
+            de = de or max(r["fecha"] for r in rows)
             print(f"[hist] data.json — {len(rows)} linhas, data_end={de}")
             return rows, de
     return [], "2026-01-01"
@@ -169,26 +168,27 @@ ORDER BY d.fecha, d.facility_id, d.tipo_contratacion
     print(f"[BQ] {len(result)} linhas | datas: {sorted({r['fecha'] for r in result})}")
     return result
 
-# ── 3. Push arquivo para GitHub ───────────────────────────────────────────────
-def github_put(filename, content_bytes, msg):
-    url = f"https://api.github.com/repos/{OWNER}/{REPO}/contents/{filename}"
-    existing = requests.get(url, headers=GH, timeout=30)
-    sha = existing.json().get("sha") if existing.status_code == 200 else None
-    body = {"message": msg, "content": base64.b64encode(content_bytes).decode("ascii"), "branch": "main"}
-    if sha: body["sha"] = sha
-    r = requests.put(url, headers=GH, json=body, timeout=120)
-    print(f"[GH] {r.status_code}: {filename}")
-    return r.status_code in (200, 201)
+# ── 3. Salvar arquivos locais e commitar via git ───────────────────────────────
+def git_push(merged, data_end, today_str):
+    payload = json.dumps({"rows": merged, "data_end": data_end}, ensure_ascii=False, separators=(",",":"))
+    with open(f"data_{today_str}.json", "w", encoding="utf-8") as f: f.write(payload)
+    with open("data.json", "w", encoding="utf-8") as f: f.write(payload)
 
-# ── 4. Atualizar HTML ─────────────────────────────────────────────────────────
-def update_html(merged, data_end):
-    r = requests.get(f"https://api.github.com/repos/{OWNER}/{REPO}/contents/artifact_hcm.html",
-                     headers=GH, timeout=30)
-    html_sha = r.json()["sha"]
-    blob_r = requests.get(
-        f"https://api.github.com/repos/{OWNER}/{REPO}/git/blobs/{html_sha}",
-        headers={**GH, "Accept": "application/vnd.github.v3.raw"}, timeout=60)
-    html = blob_r.text
+    subprocess.run(["git", "config", "user.email", "github-actions[bot]@users.noreply.github.com"], check=True)
+    subprocess.run(["git", "config", "user.name", "github-actions[bot]"], check=True)
+    subprocess.run(["git", "add", f"data_{today_str}.json", "data.json", "artifact_hcm.html"], check=True)
+    result = subprocess.run(["git", "commit", "-m", f"Auto HCM {today_str} — data_end={data_end}"],
+                            capture_output=True, text=True)
+    if result.returncode == 0:
+        subprocess.run(["git", "push"], check=True)
+        print(f"[git] commit+push ok")
+    else:
+        print(f"[git] nada a commitar: {result.stdout.strip()}")
+
+# ── 4. Atualizar artifact_hcm.html ────────────────────────────────────────────
+def update_html_local(merged, data_end):
+    with open("artifact_hcm.html", "r", encoding="utf-8") as f:
+        html = f.read()
     json_str = json.dumps(merged, ensure_ascii=False, separators=(",",":"))
     html = re.sub(r"let EMBEDDED_DATA = \[.*?\];", f"let EMBEDDED_DATA = {json_str};", html, flags=re.DOTALL)
     html = re.sub(r"let DATA_END = '[^']*';", f"let DATA_END = '{data_end}';", html)
@@ -196,38 +196,36 @@ def update_html(merged, data_end):
         "function sum(arr, f) { return arr.reduce((a,r)=>a+(r[f]||0),0); }",
         "function sum(arr, f) { return arr.reduce((a,r)=>a+parseFloat(r[f]||0),0); }"
     )
+    with open("artifact_hcm.html", "w", encoding="utf-8") as f:
+        f.write(html)
     print(f"[HTML] DATA_END={data_end} | {len(html)} chars")
     return html
 
 # ── 5. Upload Grid ─────────────────────────────────────────────────────────────
-def upload_grid(html_content, data_end):
-    import tempfile
-    with tempfile.NamedTemporaryFile(suffix=".html", mode="w", encoding="utf-8", delete=False) as f:
-        f.write(html_content)
-        tmppath = f.name
-    r = requests.post(
-        "https://grid.melioffice.com/api/v1/engine/run",
-        headers={"Authorization": f"Bearer {GRID_TOKEN}"},
-        files={
-            "config": (None, json.dumps({
-                "skill_version": "3.6.5",
-                "doc_id": DOC_ID,
-                "file_new_version": True,
-                "title": f"Tableau Gerencial HCM — até {data_end}"
-            })),
-            "file": ("artifact_hcm.html", open(tmppath, "rb"), "text/html")
-        },
-        timeout=120
-    )
+def upload_grid(data_end):
+    with open("artifact_hcm.html", "rb") as fh:
+        r = requests.post(
+            "https://grid.melioffice.com/api/v1/engine/run",
+            headers={"Authorization": f"Bearer {GRID_TOKEN}"},
+            files={
+                "config": (None, json.dumps({
+                    "skill_version": "3.6.5",
+                    "doc_id": DOC_ID,
+                    "file_new_version": True,
+                    "title": f"Tableau Gerencial HCM — até {data_end}"
+                })),
+                "file": ("artifact_hcm.html", fh, "text/html")
+            },
+            timeout=120
+        )
     result = r.json()
-    os.unlink(tmppath)
-    print(f"[Grid] ok={result.get('ok')} version={result.get('version')} url={result.get('view_url')}")
+    print(f"[Grid] ok={result.get('ok')} version={result.get('version')} url={result.get('view_url','')}")
     return result.get("ok", False)
 
 # ── Main ───────────────────────────────────────────────────────────────────────
 def main():
     today   = datetime.date.today()
-    dt_end  = today - datetime.timedelta(days=1)  # D-1
+    dt_end  = today - datetime.timedelta(days=1)
     print(f"=== HCM Update {today} | target D-1={dt_end} ===")
 
     hist_rows, hist_data_end = load_hist()
@@ -235,30 +233,28 @@ def main():
     dt_start = dt_hist + datetime.timedelta(days=1)
 
     if dt_start > dt_end:
-        print(f"[skip] Já atualizado até {hist_data_end}, nada a fazer no BQ")
+        print(f"[skip-BQ] Já atualizado até {hist_data_end}")
         new_rows = []
+        merged   = hist_rows
+        data_end = hist_data_end
     else:
         print(f"[BQ] Consultando {dt_start} → {dt_end}")
         new_rows = run_bq(str(dt_start), str(dt_end))
+        new_fechas = {r["fecha"] for r in new_rows}
+        merged = [r for r in hist_rows if r.get("fecha") not in new_fechas] + new_rows
+        merged.sort(key=lambda x: (x.get("fecha",""), x.get("facility_id",""), str(x.get("tipo_contratacion",""))))
+        data_end = max(r["fecha"] for r in merged) if merged else str(dt_end)
+        print(f"[merge] {len(merged)} linhas | data_end={data_end}")
 
-    new_fechas = {r["fecha"] for r in new_rows}
-    merged = [r for r in hist_rows if r.get("fecha") not in new_fechas] + new_rows
-    merged.sort(key=lambda x: (x.get("fecha",""), x.get("facility_id",""), str(x.get("tipo_contratacion",""))))
-    data_end = max(r["fecha"] for r in merged) if merged else str(dt_end)
-    print(f"[merge] {len(merged)} linhas | data_end={data_end}")
+    update_html_local(merged, data_end)
 
     today_str = today.strftime("%Y-%m-%d")
-    payload = json.dumps({"rows": merged, "data_end": data_end}, ensure_ascii=False, separators=(",",":"))
-    github_put(f"data_{today_str}.json", payload.encode("utf-8"), f"Auto HCM {today_str} ({len(merged)} rows)")
-    github_put("data.json", payload.encode("utf-8"), f"data.json — {data_end}")
+    git_push(merged, data_end, today_str)
 
-    html = update_html(merged, data_end)
-    github_put("artifact_hcm.html", html.encode("utf-8"), f"Auto artifact — {data_end}")
-
-    ok = upload_grid(html, data_end)
-    if not ok:
+    if not upload_grid(data_end):
         print("[ERRO] Grid upload falhou", file=sys.stderr)
         sys.exit(1)
+
     print(f"=== Concluído — {data_end} ===")
 
 if __name__ == "__main__":
