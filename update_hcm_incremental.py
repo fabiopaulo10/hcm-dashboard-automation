@@ -291,4 +291,15 @@ def main():
     print("=== CONCLUÍDO ===")
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as _exc:
+        import traceback as _tb
+        _err = _tb.format_exc()
+        print("FATAL:", _exc, flush=True)
+        print(_err, flush=True)
+        try:
+            github_put("debug_last_error.txt", _err.encode("utf-8"), "debug: error log")
+        except Exception as _e2:
+            print("Falha ao salvar log:", _e2, flush=True)
+        sys.exit(1)
