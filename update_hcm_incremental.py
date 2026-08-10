@@ -222,15 +222,16 @@ def upload_to_grid(html_content: str, data_end: str):
         ("file", ("artifact_hcm.html", html_content.encode("utf-8"), "text/html")),
     ]
     headers = {"Authorization": f"Bearer {GRID_TOKEN}"}
-    resp = requests.post(f"{GRID_HOST}/api/v1/engine/run", headers=headers, files=files, timeout=120)
     try:
-        r = resp.json()
-        if r.get("ok"):
-            print(f"Grid: versão {r.get('version')} | {r.get('view_url')}")
+        resp = requests.post(f"{GRID_HOST}/api/v1/engine/run", headers=headers, files=files, timeout=60)
+        r2 = resp.json()
+        if r2.get("ok"):
+            print(f"Grid: versão {r2.get('version')} | {r2.get('view_url')}")
         else:
-            print(f"Grid erro: {r}")
-    except Exception as e:
-        print(f"Grid HTTP {resp.status_code}: {resp.text[:200]}")
+            print(f"Grid resposta: {r2}")
+    except Exception as _ge:
+        # grid.melioffice.com requer rede MELI — não falha o job
+        print(f"Grid upload ignorado (rede não acessível): {_ge}")
 
 # ── 5. Atualiza HTML embutido ────────────────────────────────────────────────
 def update_html_embedded(rows, data_end):
