@@ -40,8 +40,26 @@ def get_historical():
 
 # ── 2. Query BigQuery incremental ───────────────────────────────────────────
 def run_bq_query(dt_start: str, dt_end: str):
+    import subprocess, sys as _sys
+    subprocess.run([_sys.executable, "-m", "pip", "install", "google-auth-oauthlib", "-q"], check=False)
+    import json as _json
     from google.cloud import bigquery
-    client = bigquery.Client(project=BQ_PROJECT)
+    from google.oauth2.credentials import Credentials
+    creds_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")
+    if creds_path and os.path.exists(creds_path):
+        with open(creds_path) as _f:
+            _cd = _json.load(_f)
+        creds = Credentials(
+            token=None,
+            refresh_token=_cd["refresh_token"],
+            token_uri="https://oauth2.googleapis.com/token",
+            client_id=_cd["client_id"],
+            client_secret=_cd["client_secret"],
+        )
+        client = bigquery.Client(project=BQ_PROJECT, credentials=creds)
+        print(f"BigQuery: credenciais carregadas de {creds_path}")
+    else:
+        client = bigquery.Client(project=BQ_PROJECT)
     print(f"BigQuery: {dt_start} → {dt_end}")
     sql = f"""
 WITH
