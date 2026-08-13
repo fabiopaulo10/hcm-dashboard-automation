@@ -284,9 +284,11 @@ def main():
     s2 = github_put("data.json", data_json.encode("utf-8"), f"data.json — {data_end}")
     print(f"GitHub data_{today_str}.json: HTTP {s1} | data.json: HTTP {s2}")
 
-    # 5. Grid
+    # 5. HTML + Grid
     html = update_html_embedded(all_rows, data_end)
     if html:
+        s_html = github_put("docs/index.html", html.encode("utf-8"), f"Update HCM dashboard {today_str}")
+        print(f"GitHub docs/index.html: HTTP {s_html}")
         upload_to_grid(html, data_end)
 
     print("=== CONCLUÍDO ===")
