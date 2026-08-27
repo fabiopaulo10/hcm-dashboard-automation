@@ -285,7 +285,15 @@ def main():
     print(f"GitHub data_{today_str}.json: HTTP {s1} | data.json: HTTP {s2}")
 
     # 5. HTML + Grid
-    html = update_html_embedded(all_rows, data_end)
+    # Grid's engine times out processing very large embedded datasets, so we
+    # only embed a rolling window of recent days in the HTML sent to Grid/docs.
+    # Full history is still preserved in data.json / data_{date}.json above.
+    HTML_WINDOW_DAYS = 90
+    cutoff = (datetime.date.fromisoformat(data_end) - datetime.timedelta(days=HTML_WINDOW_DAYS)).strftime("%Y-%m-%d")
+    html_rows = [r for r in all_rows if r["fecha"] >= cutoff]
+    print(f"HTML window: last {HTML_WINDOW_DAYS} dias ({cutoff} -> {data_end}) | {len(html_rows)}/{len(all_rows)} linhas")
+
+    html = update_html_embedded(html_rows, data_end)
     if html:
         s_html = github_put("docs/index.html", html.encode("utf-8"), f"Update HCM dashboard {today_str}")
         print(f"GitHub docs/index.html: HTTP {s_html}")
