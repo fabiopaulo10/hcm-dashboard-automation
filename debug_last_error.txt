@@ -1,15 +1,18 @@
 Traceback (most recent call last):
-  File "/home/runner/work/hcm-dashboard-automation/hcm-dashboard-automation/update_hcm_incremental.py", line 298, in <module>
+  File "/home/runner/work/hcm-dashboard-automation/hcm-dashboard-automation/update_hcm_incremental.py", line 306, in <module>
     main()
   File "/home/runner/work/hcm-dashboard-automation/hcm-dashboard-automation/update_hcm_incremental.py", line 269, in main
     new_rows = run_bq_query(dt_start, dt_end)
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   File "/home/runner/work/hcm-dashboard-automation/hcm-dashboard-automation/update_hcm_incremental.py", line 192, in run_bq_query
     for row in client.query(sql).result():
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/google/cloud/bigquery/job/query.py", line 1797, in result
-    while not is_job_done():
-              ^^^^^^^^^^^^^
+               ^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/google/cloud/bigquery/client.py", line 3640, in query
+    return _job_helpers.query_jobs_insert(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/google/cloud/bigquery/_job_helpers.py", line 205, in query_jobs_insert
+    future = do_query()
+             ^^^^^^^^^^
   File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 295, in retry_wrapped_func
     return retry_target(
            ^^^^^^^^^^^^^
@@ -21,10 +24,31 @@ Traceback (most recent call last):
   File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 148, in retry_target
     result = target()
              ^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/google/cloud/bigquery/job/query.py", line 1746, in is_job_done
-    raise job_failed_exception
-google.api_core.exceptions.Forbidden: 403 Quota exceeded: Your project_and_region exceeded quota for max number of jobs that can be queued per project. For more information, see https://cloud.google.com/bigquery/docs/troubleshoot-quotas; reason: quotaExceeded, location: max_queued_jobs, message: Quota exceeded: Your project_and_region exceeded quota for max number of jobs that can be queued per project. For more information, see https://cloud.google.com/bigquery/docs/troubleshoot-quotas
+  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/google/cloud/bigquery/_job_helpers.py", line 151, in do_query
+    query_job._begin(retry=retry, timeout=timeout)
+  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/google/cloud/bigquery/job/query.py", line 1489, in _begin
+    super(QueryJob, self)._begin(client=client, retry=retry, timeout=timeout)
+  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/google/cloud/bigquery/job/base.py", line 825, in _begin
+    api_response = client._call_api(
+                   ^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/google/cloud/bigquery/client.py", line 905, in _call_api
+    return call()
+           ^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 295, in retry_wrapped_func
+    return retry_target(
+           ^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 157, in retry_target
+    next_sleep = _retry_error_helper(
+                 ^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/google/api_core/retry/retry_base.py", line 215, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 148, in retry_target
+    result = target()
+             ^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/google/cloud/_http/__init__.py", line 509, in api_request
+    raise exceptions.from_http_response(response)
+google.api_core.exceptions.Forbidden: 403 POST https://bigquery.googleapis.com/bigquery/v2/projects/meli-bi-data/jobs?prettyPrint=false: Access Denied: Project meli-bi-data: User does not have bigquery.jobs.create permission in project meli-bi-data.
 
-Location: US
-Job ID: c0b244f9-561f-4896-996c-e336f1662172
+Location: None
+Job ID: 03b83b2a-59ed-44dd-a9be-5c1aef4352be
 
