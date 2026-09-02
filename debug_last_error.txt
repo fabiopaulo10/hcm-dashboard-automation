@@ -50,5 +50,5 @@ Traceback (most recent call last):
 google.api_core.exceptions.Forbidden: 403 POST https://bigquery.googleapis.com/bigquery/v2/projects/meli-bi-data/jobs?prettyPrint=false: Access Denied: Project meli-bi-data: User does not have bigquery.jobs.create permission in project meli-bi-data.
 
 Location: None
-Job ID: 03b83b2a-59ed-44dd-a9be-5c1aef4352be
+Job ID: 9f2a6648-7627-45b8-b906-74c30fbbf779
 
