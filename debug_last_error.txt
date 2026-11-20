@@ -6,25 +6,67 @@ Traceback (most recent call last):
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   File "/home/runner/work/hcm-dashboard-automation/hcm-dashboard-automation/update_hcm_incremental.py", line 192, in run_bq_query
     for row in client.query(sql).result():
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/google/cloud/bigquery/job/query.py", line 1797, in result
-    while not is_job_done():
-              ^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 295, in retry_wrapped_func
+               ^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages/google/cloud/bigquery/client.py", line 3728, in query
+    return _job_helpers.query_jobs_insert(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages/google/cloud/bigquery/_job_helpers.py", line 206, in query_jobs_insert
+    future = do_query()
+             ^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 295, in retry_wrapped_func
     return retry_target(
            ^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 157, in retry_target
+  File "/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 157, in retry_target
     next_sleep = _retry_error_helper(
                  ^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/google/api_core/retry/retry_base.py", line 215, in _retry_error_helper
+  File "/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages/google/api_core/retry/retry_base.py", line 215, in _retry_error_helper
     raise final_exc from source_exc
-  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 148, in retry_target
+  File "/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 148, in retry_target
     result = target()
              ^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.17/x64/lib/python3.11/site-packages/google/cloud/bigquery/job/query.py", line 1746, in is_job_done
-    raise job_failed_exception
-google.api_core.exceptions.Forbidden: 403 Quota exceeded: Your project_and_region exceeded quota for max number of jobs that can be queued per project. For more information, see https://cloud.google.com/bigquery/docs/troubleshoot-quotas; reason: quotaExceeded, location: max_queued_jobs, message: Quota exceeded: Your project_and_region exceeded quota for max number of jobs that can be queued per project. For more information, see https://cloud.google.com/bigquery/docs/troubleshoot-quotas
-
-Location: US
-Job ID: 83ce9bde-9a9f-4f27-bb1e-9c75439adae3
-
+  File "/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages/google/cloud/bigquery/_job_helpers.py", line 152, in do_query
+    query_job._begin(retry=retry, timeout=timeout)
+  File "/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages/google/cloud/bigquery/job/query.py", line 1489, in _begin
+    super(QueryJob, self)._begin(client=client, retry=retry, timeout=timeout)
+  File "/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages/google/cloud/bigquery/job/base.py", line 825, in _begin
+    api_response = client._call_api(
+                   ^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages/google/cloud/bigquery/client.py", line 998, in _call_api
+    return call()
+           ^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 295, in retry_wrapped_func
+    return retry_target(
+           ^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 157, in retry_target
+    next_sleep = _retry_error_helper(
+                 ^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages/google/api_core/retry/retry_base.py", line 215, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages/google/api_core/retry/retry_unary.py", line 148, in retry_target
+    result = target()
+             ^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages/google/cloud/_http/__init__.py", line 497, in api_request
+    response = self._make_request(
+               ^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages/google/cloud/_http/__init__.py", line 356, in _make_request
+    return self._do_request(
+           ^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages/google/cloud/_http/__init__.py", line 394, in _do_request
+    return self.http.request(
+           ^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages/google/auth/transport/requests.py", line 739, in request
+    self.credentials.before_request(auth_request, method, url, request_headers)
+  File "/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages/google/auth/credentials.py", line 242, in before_request
+    self._blocking_refresh(request)
+  File "/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages/google/auth/credentials.py", line 205, in _blocking_refresh
+    self.refresh(request)
+  File "/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages/google/auth/credentials.py", line 519, in refresh
+    self._perform_refresh_token(request)
+  File "/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages/google/oauth2/credentials.py", line 437, in _perform_refresh_token
+    ) = reauth.refresh_grant(
+        ^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages/google/oauth2/reauth.py", line 367, in refresh_grant
+    _client._handle_error_response(response_data, retryable_error)
+  File "/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages/google/oauth2/_client.py", line 75, in _handle_error_response
+    raise exceptions.RefreshError(
+google.auth.exceptions.RefreshError: ('access_denied: Account restricted', {'error': 'access_denied', 'error_description': 'Account restricted', 'error_uri': 'https://accounts.google.com/info/servicerestricted?es=ABAdc_iqLoLIigYkd3-ximyZ4cXObTSfmSCLEuL0XtW9qk9tekaJgXtV5DYY-ghSd0QqDYaW6KBOolrCHN8GKIOimEQS1H0HF-JdjhmiMmfFyG5eAnkmyVM'})
