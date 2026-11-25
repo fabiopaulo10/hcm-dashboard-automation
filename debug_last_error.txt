@@ -69,4 +69,4 @@ Traceback (most recent call last):
     _client._handle_error_response(response_data, retryable_error)
   File "/opt/hostedtoolcache/Python/3.11.18/x64/lib/python3.11/site-packages/google/oauth2/_client.py", line 75, in _handle_error_response
     raise exceptions.RefreshError(
-google.auth.exceptions.RefreshError: ('access_denied: Account restricted', {'error': 'access_denied', 'error_description': 'Account restricted', 'error_uri': 'https://accounts.google.com/info/servicerestricted?es=ABAdc_gkcOpy9Zp9Zrlo6ctv-o1AKeJN26uvJDynWx69peNzc1bflhlFkNGlWQEPz7sNeCL3sC-RV1A57916MTVpErX53zz7cpYCux1sjzZzx-AhZszHAbg'})
+google.auth.exceptions.RefreshError: ('access_denied: Account restricted', {'error': 'access_denied', 'error_description': 'Account restricted', 'error_uri': 'https://accounts.google.com/info/servicerestricted?es=ABAdc_go9Q0I_EzBtdV2NLHUSkzhOBCUmVV2cSiyaSLqFrZuOJ_PkJv0DRv5c3QN63t6bey7YgWy_XrBtSowfln1srPnqVefIBiZuxkQEoFnHLFuM65ZTxM'})
